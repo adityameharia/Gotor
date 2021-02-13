@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/adityameharia/gotor/file"
+	"github.com/adityameharia/gotor/cmd/file"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
