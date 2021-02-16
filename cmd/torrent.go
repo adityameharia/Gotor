@@ -16,7 +16,8 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
+	file "gotor/cmd/packages/file"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +33,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("torrent called")
+		download(args[0], args[1])
 	},
 }
 
@@ -48,4 +49,15 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// torrentCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+func download(path string, dest string) {
+	f, err := file.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = f.DownloadFile(dest)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
