@@ -2,11 +2,8 @@ package file
 
 import (
 	"crypto/rand"
-	"encoding/binary"
-	"fmt"
-	"net"
+	"gotor/cmd/packages/peer"
 	"os"
-	"strconv"
 
 	"github.com/jackpal/bencode-go"
 )
@@ -25,12 +22,6 @@ type TorrentFile struct {
 type Tracker struct {
 	Interval int    `bencode:"interval"`
 	Peers    string `bencode:"peers"`
-}
-
-// Peer struct containg ip and port of the client
-type Peer struct {
-	IP   net.IP
-	Port uint16
 }
 
 //Open is used to open the file,unmarshall the contents of the file and convert it to the form of a torrentFile
@@ -56,36 +47,21 @@ func (t *TorrentFile) DownloadFile(path string) error {
 	if err != nil {
 		return err
 	}
-	err = t.requestPeers(Pid, 7000)
+	peers, err := t.requestPeers(Pid, 7000)
 	if err != nil {
 		return err
 	}
+
+	torrent := peer.Torrent{
+		Peers:       peers,
+		PeerID:      Pid,
+		InfoHash:    t.InfoHash,
+		PieceHashes: t.PieceHashes,
+		PieceLength: t.PieceLength,
+		Length:      t.Length,
+		Name:        t.Name,
+	}
+	err = torrent.Download()
+
 	return nil
-}
-
-//DecodePeer takes the peers string and converts them into the an array of Peers struct
-func DecodePeer(bin []byte) ([]Peer, error) {
-	const size = 6
-	num := len(bin) / size
-	if len(bin)%size != 0 {
-		err := fmt.Errorf("Peers string has been corrupted")
-		return nil, err
-	}
-	peers := make([]Peer, num)
-
-	for i := 0; i < num; i++ {
-		offset := i * size
-		peers[i].IP = net.IP(bin[offset : offset+4])
-		peers[i].Port = binary.BigEndian.Uint16([]byte(bin[offset+4 : offset+6]))
-	}
-	fmt.Println("helo")
-	fmt.Println(peers)
-	fmt.Println("he")
-
-	return peers, nil
-}
-
-//String is used to convert the peer struct to a valid ip address
-func (p Peer) String() string {
-	return net.JoinHostPort(p.IP.String(), strconv.Itoa(int(p.Port)))
 }

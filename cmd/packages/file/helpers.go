@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	peer "gotor/cmd/packages/peer"
+
 	"github.com/jackpal/bencode-go"
 )
 
@@ -24,7 +26,9 @@ type bencodeTorrent struct {
 	Info     bencodeInfo `bencode:"info"`
 }
 
-func (t *TorrentFile) requestPeers(Pid []byte, port uint16) error {
+//request peers takes the announce url in the torrent file and adds a few url encoded parameters to it.
+//It then decodes the peers binary blob recieved as a response to an array of Peer structs
+func (t *TorrentFile) requestPeers(Pid []byte, port uint16) ([]peer.Peer, error) {
 	params := url.Values{
 		"info_hash":  []string{string(t.InfoHash[:])},
 		"peer_id":    []string{string(Pid[:])},
@@ -39,21 +43,20 @@ func (t *TorrentFile) requestPeers(Pid []byte, port uint16) error {
 	c := &http.Client{Timeout: 15 * time.Second}
 	resp, err := c.Get(Requrl)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	tracker := Tracker{}
 	err = bencode.Unmarshal(resp.Body, &tracker)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	DecodePeer([]byte(tracker.Peers))
-
-	return nil
+	return peer.DecodePeer([]byte(tracker.Peers))
 }
 
+//toTorrentFile converts the bencode torrent to a torrentFile struct
 func (b *bencodeTorrent) toTorrentFile() (TorrentFile, error) {
 	var buf bytes.Buffer
 	err := bencode.Marshal(&buf, b.Info)
