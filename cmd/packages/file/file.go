@@ -2,7 +2,7 @@ package file
 
 import (
 	"crypto/rand"
-	"gotor/cmd/packages/peer"
+	peer "gotor/cmd/packages/peer"
 	"os"
 
 	"github.com/jackpal/bencode-go"

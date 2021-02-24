@@ -43,6 +43,7 @@ func (t *TorrentFile) requestPeers(Pid []byte, port uint16) ([]peer.Peer, error)
 	c := &http.Client{Timeout: 15 * time.Second}
 	resp, err := c.Get(Requrl)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -50,10 +51,36 @@ func (t *TorrentFile) requestPeers(Pid []byte, port uint16) ([]peer.Peer, error)
 	tracker := Tracker{}
 	err = bencode.Unmarshal(resp.Body, &tracker)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 
+	// base, err := url.Parse(t.Announce)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// CONNECT := base.Host
+
+	// s, err := net.ResolveUDPAddr("udp4", CONNECT)
+	// c, err := net.DialUDP("udp4", nil, s)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return nil, err
+	// }
+	// fmt.Println("hi")
+	// var buf []byte
+	// fmt.Println("bye")
+	// n, _, err := c.ReadFromUDP(buf)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return nil, err
+	// }
+	// fmt.Println("hel")
+	// fmt.Printf("Reply: %s\n", string(buf[0:n]))
 	return peer.DecodePeer([]byte(tracker.Peers))
+	// fmt.Println(c.RemoteAddr().String())
+	// return nil, nil
 }
 
 //toTorrentFile converts the bencode torrent to a torrentFile struct

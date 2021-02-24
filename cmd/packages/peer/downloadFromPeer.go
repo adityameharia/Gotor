@@ -1,6 +1,10 @@
 package peer
 
-import "fmt"
+import (
+	"fmt"
+	connection "gotor/cmd/packages/connection"
+	"log"
+)
 
 type work struct {
 	index  int
@@ -25,6 +29,7 @@ func (t *Torrent) Download() error {
 	}
 	<-workerQueue
 	fmt.Println(<-workerQueue)
+	t.startDownload(t.Peers[1], workerQueue)
 	return nil
 }
 
@@ -35,4 +40,18 @@ func (t *Torrent) pieceSize(index int) int {
 		e = t.Length
 	}
 	return e - b
+}
+
+func (t *Torrent) startDownload(peer Peer, workQueue chan *work) {
+	c, err := connection.New(peer.String(), t.PeerID, t.InfoHash)
+	if err != nil {
+		log.Printf("Could not handshake with %s. Disconnecting\n", peer.IP)
+		return
+	}
+	defer c.Conn.Close()
+
+	log.Printf("Completed handshake with %s\n", peer.IP)
+
+	c.SendUnchoke()
+	c.SendInterested()
 }

@@ -46,6 +46,8 @@ func DecodePeer(bin []byte) ([]Peer, error) {
 		peers[i].Port = binary.BigEndian.Uint16([]byte(bin[offset+4 : offset+6]))
 	}
 
+	//fmt.Println(peers)
+
 	return peers, nil
 }
 
