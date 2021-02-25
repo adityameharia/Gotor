@@ -2,6 +2,7 @@ package file
 
 import (
 	"crypto/rand"
+	"fmt"
 	peer "gotor/cmd/packages/peer"
 	"os"
 
@@ -52,6 +53,8 @@ func (t *TorrentFile) DownloadFile(path string) error {
 		return err
 	}
 
+	fmt.Println(peers)
+
 	torrent := peer.Torrent{
 		Peers:       peers,
 		PeerID:      Pid,
@@ -61,7 +64,22 @@ func (t *TorrentFile) DownloadFile(path string) error {
 		Length:      t.Length,
 		Name:        t.Name,
 	}
-	err = torrent.Download()
 
+	outFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	buf, err := torrent.Download()
+
+	if err != nil {
+		return err
+	}
+
+	_, err = outFile.Write(buf)
+	if err != nil {
+		return err
+	}
 	return nil
 }

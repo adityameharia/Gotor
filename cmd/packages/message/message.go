@@ -1,3 +1,4 @@
+//Package message has been literally copied code from veggiefender/torrent-client
 package message
 
 import (
@@ -15,24 +16,24 @@ type Message struct {
 }
 
 const (
-	// MsgChoke chokes the receiver
-	MsgChoke messageID = 0
-	// MsgUnchoke unchokes the receiver
-	MsgUnchoke messageID = 1
-	// MsgInterested expresses interest in receiving data
-	MsgInterested messageID = 2
-	// MsgNotInterested expresses disinterest in receiving data
-	MsgNotInterested messageID = 3
-	// MsgHave alerts the receiver that the sender has downloaded a piece
-	MsgHave messageID = 4
-	// MsgBitfield encodes which pieces that the sender has downloaded
-	MsgBitfield messageID = 5
-	// MsgRequest requests a block of data from the receiver
-	MsgRequest messageID = 6
-	// MsgPiece delivers a block of data to fulfill a request
-	MsgPiece messageID = 7
-	// MsgCancel cancels a request
-	MsgCancel messageID = 8
+	// Choke chokes the receiver
+	Choke messageID = 0
+	// Unchoke unchokes the receiver
+	Unchoke messageID = 1
+	// Interested expresses interest in receiving data
+	Interested messageID = 2
+	// NotInterested expresses disinterest in receiving data
+	NotInterested messageID = 3
+	// Have alerts the receiver that the sender has downloaded a piece
+	Have messageID = 4
+	// Bitfield encodes which pieces that the sender has downloaded
+	Bitfield messageID = 5
+	// Request requests a block of data from the receiver
+	Request messageID = 6
+	// Piece delivers a block of data to fulfill a request
+	Piece messageID = 7
+	// Cancel cancels a request
+	Cancel messageID = 8
 )
 
 //Read reads a message from stream.
@@ -77,23 +78,23 @@ func (m *Message) name() string {
 		return "KeepAlive"
 	}
 	switch m.ID {
-	case MsgChoke:
+	case Choke:
 		return "Choke"
-	case MsgUnchoke:
+	case Unchoke:
 		return "Unchoke"
-	case MsgInterested:
+	case Interested:
 		return "Interested"
-	case MsgNotInterested:
+	case NotInterested:
 		return "NotInterested"
-	case MsgHave:
+	case Have:
 		return "Have"
-	case MsgBitfield:
+	case Bitfield:
 		return "Bitfield"
-	case MsgRequest:
+	case Request:
 		return "Request"
-	case MsgPiece:
+	case Piece:
 		return "Piece"
-	case MsgCancel:
+	case Cancel:
 		return "Cancel"
 	default:
 		return fmt.Sprintf("Unknown#%d", m.ID)
@@ -113,4 +114,56 @@ func (m *Message) Serialize() []byte {
 	buf[4] = byte(m.ID)
 	copy(buf[5:], m.Payload)
 	return buf
+}
+
+// FormatRequest creates a REQUEST message
+func FormatRequest(index, begin, length int) *Message {
+	payload := make([]byte, 12)
+	binary.BigEndian.PutUint32(payload[0:4], uint32(index))
+	binary.BigEndian.PutUint32(payload[4:8], uint32(begin))
+	binary.BigEndian.PutUint32(payload[8:12], uint32(length))
+	return &Message{ID: Request, Payload: payload}
+}
+
+// ParseHave parses a HAVE message
+func ParseHave(msg *Message) (int, error) {
+	if msg.ID != Have {
+		return 0, fmt.Errorf("Expected HAVE (ID %d), got ID %d", Have, msg.ID)
+	}
+	if len(msg.Payload) != 4 {
+		return 0, fmt.Errorf("Expected payload length 4, got length %d", len(msg.Payload))
+	}
+	index := int(binary.BigEndian.Uint32(msg.Payload))
+	return index, nil
+}
+
+// ParsePiece parses a PIECE message and copies its payload into a buffer
+func ParsePiece(index int, buf []byte, msg *Message) (int, error) {
+	if msg.ID != Piece {
+		return 0, fmt.Errorf("Expected PIECE (ID %d), got ID %d", Piece, msg.ID)
+	}
+	if len(msg.Payload) < 8 {
+		return 0, fmt.Errorf("Payload too short. %d < 8", len(msg.Payload))
+	}
+	parsedIndex := int(binary.BigEndian.Uint32(msg.Payload[0:4]))
+	if parsedIndex != index {
+		return 0, fmt.Errorf("Expected index %d, got %d", index, parsedIndex)
+	}
+	begin := int(binary.BigEndian.Uint32(msg.Payload[4:8]))
+	if begin >= len(buf) {
+		return 0, fmt.Errorf("Begin offset too high. %d >= %d", begin, len(buf))
+	}
+	data := msg.Payload[8:]
+	if begin+len(data) > len(buf) {
+		return 0, fmt.Errorf("Data too long [%d] for offset %d with length %d", len(data), begin, len(buf))
+	}
+	copy(buf[begin:], data)
+	return len(data), nil
+}
+
+// FormatHave creates a HAVE message
+func FormatHave(index int) *Message {
+	payload := make([]byte, 4)
+	binary.BigEndian.PutUint32(payload, uint32(index))
+	return &Message{ID: Have, Payload: payload}
 }

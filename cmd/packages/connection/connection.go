@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"bytes"
 	"fmt"
 	message "gotor/cmd/packages/message"
 	"io"
@@ -62,7 +63,7 @@ func New(peer string, pid []byte, infoHash [20]byte) (*Client, error) {
 		fmt.Println(err)
 		return nil, err
 	}
-	err = peerHandshake(conn, infoHash, pid)
+	_, err = peerHandshake(conn, infoHash, pid)
 	if err != nil {
 		conn.Close()
 		return nil, err
@@ -85,7 +86,7 @@ func New(peer string, pid []byte, infoHash [20]byte) (*Client, error) {
 	}, nil
 }
 
-func peerHandshake(conn net.Conn, infohash [20]byte, Pid []byte) error {
+func peerHandshake(conn net.Conn, infohash [20]byte, Pid []byte) (*handshake, error) {
 	conn.SetDeadline(time.Now().Add(3 * time.Second))
 	defer conn.SetDeadline(time.Time{})
 	req := handshake{
@@ -95,15 +96,18 @@ func peerHandshake(conn net.Conn, infohash [20]byte, Pid []byte) error {
 	}
 	_, err := conn.Write(req.Serialize())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	res, err := req.Read(conn)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Println(res)
-	return nil
+	if !bytes.Equal(res.InfoHash[:], infohash[:]) {
+		return nil, fmt.Errorf("Expected infohash %x but got %x", res.InfoHash, infohash)
+	}
+	//fmt.Println(res)
+	return res, nil
 }
 
 func (h *handshake) Serialize() []byte {
@@ -167,7 +171,7 @@ func manipulateBitfield(c net.Conn) (Bitfield, error) {
 		return nil, err
 	}
 
-	if msg.ID != message.MsgBitfield {
+	if msg.ID != message.Bitfield {
 		err := fmt.Errorf("Expected bitfield but got ID %d", msg.ID)
 		return nil, err
 	}
