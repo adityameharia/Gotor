@@ -69,7 +69,12 @@ func (t *TorrentFile) DownloadFile(path string) error {
 	if err != nil {
 		return err
 	}
-	defer outFile.Close()
+	defer func(outFile *os.File) {
+		err := outFile.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+	}(outFile)
 
 	buf, err := torrent.Download()
 
