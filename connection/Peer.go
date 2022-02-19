@@ -1,7 +1,7 @@
 package connection
 
 import (
-	message "gotor/cmd/packages/message"
+	message "github.com/adityameharia/gotor/message"
 )
 
 // SendUnchoke sends an Unchoke message to the peer

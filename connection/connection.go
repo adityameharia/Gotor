@@ -3,7 +3,7 @@ package connection
 import (
 	"bytes"
 	"fmt"
-	message "gotor/cmd/packages/message"
+	message "github.com/adityameharia/gotor/message"
 	"io"
 	"net"
 	"time"

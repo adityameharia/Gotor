@@ -15,8 +15,10 @@ limitations under the License.
 */
 package main
 
-import "gotor/cmd"
+import (
+	"github.com/adityameharia/gotor/cmd/gotor/commands"
+)
 
 func main() {
-	cmd.Execute()
+	commands.Execute()
 }

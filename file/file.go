@@ -3,7 +3,7 @@ package file
 import (
 	"crypto/rand"
 	"fmt"
-	peer "gotor/cmd/packages/peer"
+	peer "github.com/adityameharia/gotor/peer"
 	"os"
 
 	"github.com/jackpal/bencode-go"

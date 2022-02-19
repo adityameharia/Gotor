@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	peer "gotor/cmd/packages/peer"
+	peer "github.com/adityameharia/gotor/peer"
 
 	"github.com/jackpal/bencode-go"
 )
