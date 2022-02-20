@@ -22,8 +22,9 @@ type bencodeInfo struct {
 }
 
 type bencodeTorrent struct {
-	Announce string      `bencode:"announce"`
-	Info     bencodeInfo `bencode:"info"`
+	Announce     string      `bencode:"announce"`
+	AnnounceList [][]string  `bencode:"announce-list"`
+	Info         bencodeInfo `bencode:"info"`
 }
 
 //request peers takes the announce url in the torrent file and adds a few url encoded parameters to it.
@@ -83,6 +84,29 @@ func (t *TorrentFile) requestPeers(Pid []byte, port uint16) ([]peer.Peer, error)
 	// return nil, nil
 }
 
+func (b *bencodeTorrent) RemoveWSS() error {
+	var al [][]string // Announce List-It consists of all the tackers and their backups
+	var tl []string   //consists of an array of trackers
+	for _, trackerList := range b.AnnounceList {
+		for _, tracker := range trackerList {
+			url, err := url.Parse(tracker)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+			if url.Scheme == "http" || url.Scheme == "udp" {
+				tl = append(tl, tracker)
+			}
+		}
+		if len(tl) != 0 {
+			al = append(al, tl)
+		}
+		tl = nil
+	}
+	b.AnnounceList = al
+	return nil
+}
+
 //toTorrentFile converts the bencode torrent to a torrentFile struct
 func (b *bencodeTorrent) toTorrentFile() (TorrentFile, error) {
 	var buf bytes.Buffer
@@ -106,12 +130,13 @@ func (b *bencodeTorrent) toTorrentFile() (TorrentFile, error) {
 	}
 
 	t := TorrentFile{
-		Announce:    b.Announce,
-		InfoHash:    h,
-		PieceHashes: hashes,
-		PieceLength: b.Info.PieceLength,
-		Length:      b.Info.Length,
-		Name:        b.Info.Name,
+		Announce:     b.Announce,
+		AnnounceList: b.AnnounceList,
+		InfoHash:     h,
+		PieceHashes:  hashes,
+		PieceLength:  b.Info.PieceLength,
+		Length:       b.Info.Length,
+		Name:         b.Info.Name,
 	}
 
 	return t, nil

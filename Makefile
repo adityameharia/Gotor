@@ -1,5 +1,5 @@
 build:
-	go build -o ./dist/gotor ./cmd/gotor
+	go build -o ./gotor ./cmd/gotor
 
 run:
-	go run ./cmd/gotor
+	./dist/gotor

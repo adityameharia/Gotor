@@ -16,6 +16,7 @@ limitations under the License.
 package commands
 
 import (
+	"fmt"
 	file "github.com/adityameharia/gotor/file"
 	"log"
 
@@ -55,9 +56,10 @@ func download(path string, dest string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	err = f.DownloadFile(dest)
-	if err != nil {
-		log.Fatal(err)
-	}
+	fmt.Println(f.Announce)
+	fmt.Println(f.AnnounceList)
+	//err = f.DownloadFile(dest)
+	//if err != nil {
+	//	log.Fatal(err)
+	//}
 }

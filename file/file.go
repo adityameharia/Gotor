@@ -11,12 +11,13 @@ import (
 
 //TorrentFile struct of the torrent file
 type TorrentFile struct {
-	Announce    string
-	InfoHash    [20]byte
-	PieceHashes [][20]byte
-	PieceLength int
-	Length      int
-	Name        string
+	Announce     string
+	AnnounceList [][]string
+	InfoHash     [20]byte
+	PieceHashes  [][20]byte
+	PieceLength  int
+	Length       int
+	Name         string
 }
 
 //Tracker has the peers string and the time interval after which to send another request
@@ -31,10 +32,13 @@ func Open(path string) (TorrentFile, error) {
 	if err != nil {
 		return TorrentFile{}, err
 	}
-
 	defer f.Close()
 	b := bencodeTorrent{}
 	err = bencode.Unmarshal(f, &b)
+	if err != nil {
+		return TorrentFile{}, err
+	}
+	err = b.RemoveWSS()
 	if err != nil {
 		return TorrentFile{}, err
 	}
